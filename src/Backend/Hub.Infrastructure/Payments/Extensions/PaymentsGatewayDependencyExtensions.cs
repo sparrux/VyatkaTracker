@@ -1,3 +1,4 @@
+using System.Security.Authentication;
 using Hub.Application.Abstractions.Payments;
 using Hub.Infrastructure.Payments.Gateways;
 using Hub.Infrastructure.Payments.Gateways.PayPal;
@@ -25,10 +26,19 @@ static class PaymentsGatewayDependencyExtensions
                 var paypal = provider.GetRequiredService<IOptions<PayPalOptions>>().Value;
                 client.BaseAddress = paypal.ApiBaseUri;
                 client.Timeout = TimeSpan.FromSeconds(30);
+            }).ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+            {
+                SslOptions =
+                {
+                    EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
+                }
             });
 
+            services.AddScoped<PayPalAccessTokenSource>();
             services.AddScoped<IPaymentGateway, PayPalGateway>();
             services.AddScoped<IPaymentGatewayResolver, PaymentGatewayResolver>();
+            services.AddScoped<IPaymentWebhookParser, PayPalWebhookParser>();
+            services.AddScoped<IPaymentWebhookParserResolver, PaymentWebhookParserResolver>();
         }
     }
 }

@@ -1,5 +1,6 @@
 using Hub.Application.Abstractions;
 using Hub.Domain.Payments;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -55,8 +56,14 @@ public sealed class PaymentsDbContext : DbContext, IPaymentsDbContext
         modelBuilder.ApplyConfigurationsFromAssembly(
             typeof(PaymentsDbContext).Assembly,
             type => type.Namespace?.StartsWith("Hub.Infrastructure.Payments", StringComparison.Ordinal) == true);
+
+        modelBuilder.AddInboxStateEntity(entity => entity.ToTable("inbox_state", Schema));
+        modelBuilder.AddOutboxMessageEntity(entity => entity.ToTable("outbox_message", Schema));
+        modelBuilder.AddOutboxStateEntity(entity => entity.ToTable("outbox_state", Schema));
     }
 
     public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
         => Database.BeginTransactionAsync(cancellationToken);
+
+    public void RejectChanges() => ChangeTracker.Clear();
 }

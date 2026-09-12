@@ -11,4 +11,7 @@ public abstract class AggregateRoot : Auditable
 
     protected void AddDomainEvent(IDomainEvent domainEvent) => 
         _domainEvents.Add(domainEvent);
+
+    public void ClearDomainEvents() =>
+        _domainEvents.Clear();
 }

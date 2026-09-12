@@ -1,4 +1,5 @@
 using Hub.Application.Abstractions;
+using Hub.Infrastructure.Messaging;
 using Hub.Infrastructure.Payments;
 using Hub.Infrastructure.Persistence.Interceptors;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,7 @@ static class PersistenceDependencyExtensions
         public void AddPersistenceServices(string dbConnectionName, IConfiguration configuration)
         {
             services.AddSingleton<AuditInterceptor>();
+            services.AddScoped<DomainEventOutboxInterceptor>();
             services.AddDbContext<HubDbContext>((provider, options) =>
             {
                 options.UseNpgsql(configuration.GetConnectionString(dbConnectionName));
@@ -26,7 +28,9 @@ static class PersistenceDependencyExtensions
             {
                 options.UsePaymentsNpgsql(configuration.GetConnectionString(dbConnectionName));
 
-                options.AddInterceptors(provider.GetRequiredService<AuditInterceptor>());
+                options.AddInterceptors(
+                    provider.GetRequiredService<AuditInterceptor>(),
+                    provider.GetRequiredService<DomainEventOutboxInterceptor>());
             });
             services.AddScoped<IPaymentsDbContext>(sp => sp.GetRequiredService<PaymentsDbContext>());
         }

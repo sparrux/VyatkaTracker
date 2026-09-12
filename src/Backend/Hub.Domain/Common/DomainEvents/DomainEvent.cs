@@ -4,12 +4,12 @@ public abstract class DomainEvent : IDomainEvent
 {
     protected DomainEvent() : this(Guid.NewGuid())
     {
-        EventId = Guid.NewGuid();
     }
 
     protected DomainEvent(Guid eventId)
     {
         EventId = eventId;
+        OccurredOn = DateTimeOffset.UtcNow;
     }
     
     public Guid EventId { get; }

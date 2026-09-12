@@ -26,5 +26,7 @@ public interface IPaymentsDbContext
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
+    void RejectChanges();
+
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 }

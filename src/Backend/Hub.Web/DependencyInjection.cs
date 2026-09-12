@@ -102,6 +102,8 @@ static class DependencyInjection
             app.MapUserEndpoints();
             app.MapEventEndpoints();
             app.MapGroupEndpoints();
+            app.MapDonationEndpoints();
+            app.MapPaymentWebhookEndpoints();
         }
 
         public void MapWebOpenApi()

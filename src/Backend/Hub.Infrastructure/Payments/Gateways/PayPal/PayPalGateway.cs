@@ -1,14 +1,12 @@
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using Ardalis.Result;
 using Hub.Application.Abstractions.Payments;
 using Hub.Domain.Payments;
 using Hub.Domain.Payments.ValueObjects;
 using Hub.Infrastructure.Payments.Options;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -16,13 +14,12 @@ namespace Hub.Infrastructure.Payments.Gateways.PayPal;
 
 sealed class PayPalGateway(
     IHttpClientFactory httpClientFactory,
+    PayPalAccessTokenSource accessTokenSource,
     IOptions<PayPalOptions> options,
-    IMemoryCache cache,
     ILogger<PayPalGateway> logger
 ) : IPaymentGateway
 {
     public const string HttpClientName = "PayPal";
-    const string TokenCacheKey = "payments:paypal:access-token";
 
     public string Name => PaymentGatewayNames.PayPal;
 
@@ -189,7 +186,7 @@ sealed class PayPalGateway(
         CancellationToken cancellationToken)
         where TResponse : class
     {
-        var token = await GetAccessTokenAsync(cancellationToken);
+        var token = await accessTokenSource.GetAccessTokenAsync(cancellationToken);
         if (!token.IsSuccess)
             return token.Map();
 
@@ -236,52 +233,6 @@ sealed class PayPalGateway(
             return Result.Error("PayPal returned an unreadable response");
 
         return Result.Success(parsed);
-    }
-
-    async Task<Result<string>> GetAccessTokenAsync(CancellationToken cancellationToken)
-    {
-        if (cache.TryGetValue(TokenCacheKey, out string? cached) && !string.IsNullOrWhiteSpace(cached))
-            return Result.Success(cached);
-
-        var client = httpClientFactory.CreateClient(HttpClientName);
-        var credentials = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes($"{options.Value.ClientId}:{options.Value.ClientSecret}"));
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, "v1/oauth2/token");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
-        request.Content = new FormUrlEncodedContent(
-            [new KeyValuePair<string, string>("grant_type", "client_credentials")]);
-
-        HttpResponseMessage response;
-        try
-        {
-            response = await client.SendAsync(request, cancellationToken);
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(exception, "PayPal token request failed");
-            return Result.Error("PayPal is unavailable");
-        }
-
-        if (!response.IsSuccessStatusCode)
-        {
-            logger.LogWarning("PayPal token request failed with {StatusCode}", (int)response.StatusCode);
-            return Result.Error("PayPal authentication failed");
-        }
-
-        var token = await response.Content.ReadFromJsonAsync<PayPalTokenResponse>(
-            PayPalJson.Options,
-            cancellationToken);
-
-        if (token?.AccessToken is null)
-            return Result.Error("PayPal did not return an access token");
-
-        var lifetime = token.ExpiresIn > 60
-            ? TimeSpan.FromSeconds(token.ExpiresIn - 60)
-            : TimeSpan.FromMinutes(1);
-
-        cache.Set(TokenCacheKey, token.AccessToken, lifetime);
-        return Result.Success(token.AccessToken);
     }
 
     static GatewayPaymentResult ToPaymentResult(PayPalOrderResponse order, string fallbackId)

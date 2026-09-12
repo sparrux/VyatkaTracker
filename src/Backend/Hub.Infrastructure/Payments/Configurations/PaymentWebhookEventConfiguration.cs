@@ -21,6 +21,13 @@ sealed class PaymentWebhookEventConfiguration : IEntityTypeConfiguration<Payment
             .HasMaxLength(200)
             .IsRequired();
 
+        builder.Property(webhook => webhook.Payload)
+            .HasColumnType("jsonb")
+            .IsRequired();
+
+        builder.Property(webhook => webhook.ProviderPaymentId)
+            .HasMaxLength(200);
+
         builder.Property(webhook => webhook.Status).AsStringEnum();
 
         builder.Property(webhook => webhook.FailureReason)
