@@ -8,6 +8,8 @@ public interface IPaymentGateway
 {
     string Name { get; }
 
+    bool SupportsRemoteCapture { get; }
+
     Task<Result<CreateGatewayPaymentResult>> CreatePaymentAsync(
         CreateGatewayPaymentRequest request,
         CancellationToken cancellationToken);

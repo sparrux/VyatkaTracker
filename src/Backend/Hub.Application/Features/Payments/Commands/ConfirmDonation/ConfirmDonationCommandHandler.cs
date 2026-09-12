@@ -52,6 +52,9 @@ sealed class ConfirmDonationCommandHandler(
         if (!gateway.IsSuccess)
             return gateway.Map();
 
+        if (!gateway.Value.SupportsRemoteCapture)
+            return Result.Error("This payment must be confirmed by an administrator");
+
         var captured = await gateway.Value.CapturePaymentAsync(
             attempt.ProviderPaymentId,
             DonationCheckout.GatewayIdempotencyKey(attempt, "capture"),

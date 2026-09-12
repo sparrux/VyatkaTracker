@@ -1,6 +1,7 @@
 using System.Security.Authentication;
 using Hub.Application.Abstractions.Payments;
 using Hub.Infrastructure.Payments.Gateways;
+using Hub.Infrastructure.Payments.Gateways.Cash;
 using Hub.Infrastructure.Payments.Gateways.PayPal;
 using Hub.Infrastructure.Payments.Options;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +37,7 @@ static class PaymentsGatewayDependencyExtensions
 
             services.AddScoped<PayPalAccessTokenSource>();
             services.AddScoped<IPaymentGateway, PayPalGateway>();
+            services.AddScoped<IPaymentGateway, CashGateway>();
             services.AddScoped<IPaymentGatewayResolver, PaymentGatewayResolver>();
             services.AddScoped<IPaymentWebhookParser, PayPalWebhookParser>();
             services.AddScoped<IPaymentWebhookParserResolver, PaymentWebhookParserResolver>();

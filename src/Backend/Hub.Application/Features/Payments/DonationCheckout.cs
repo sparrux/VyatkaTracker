@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Hub.Application.Abstractions.Payments;
 using Hub.Domain.Payments;
 
 namespace Hub.Application.Features.Payments;
@@ -72,4 +73,7 @@ static class DonationCheckout
 
         return $"{attempt.Id:N}-{suffix}";
     }
+
+    public static bool IsCash(PaymentAttempt attempt) =>
+        string.Equals(attempt.Provider.Value, PaymentGatewayNames.Cash, StringComparison.OrdinalIgnoreCase);
 }

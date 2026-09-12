@@ -23,6 +23,8 @@ sealed class PayPalGateway(
 
     public string Name => PaymentGatewayNames.PayPal;
 
+    public bool SupportsRemoteCapture => true;
+
     public async Task<Result<CreateGatewayPaymentResult>> CreatePaymentAsync(
         CreateGatewayPaymentRequest request,
         CancellationToken cancellationToken)

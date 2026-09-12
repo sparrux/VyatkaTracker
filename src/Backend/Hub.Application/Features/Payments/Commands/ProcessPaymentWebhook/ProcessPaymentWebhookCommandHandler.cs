@@ -55,6 +55,12 @@ sealed class ProcessPaymentWebhookCommandHandler(
         if (!gateway.IsSuccess)
             return gateway.Map();
 
+        if (!gateway.Value.SupportsRemoteCapture)
+            return await CompleteWebhook(
+                webhook,
+                webhook.MarkAsFailed("Webhook processing is not supported for this payment provider"),
+                cancellationToken);
+
         var current = await gateway.Value.GetPaymentAsync(
             webhook.ProviderPaymentId,
             cancellationToken);
