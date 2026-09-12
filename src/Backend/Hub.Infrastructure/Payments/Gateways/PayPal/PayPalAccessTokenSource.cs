@@ -30,7 +30,11 @@ sealed class PayPalAccessTokenSource(
         using var request = new HttpRequestMessage(HttpMethod.Post, "v1/oauth2/token");
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        
+        request.Content = new FormUrlEncodedContent(
+        [
+            new KeyValuePair<string, string>("grant_type", "client_credentials")
+        ]);
+
         HttpResponseMessage response;
         try
         {
